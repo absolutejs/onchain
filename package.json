@@ -1,0 +1,16 @@
+{
+  "name": "@absolutejs/onchain",
+  "version": "0.0.1",
+  "description": "Tasteful, optional on-chain provenance for AbsoluteJS apps: earn → gasless, soulbound, seed-is-asset collectibles with real editions. Provider-agnostic; ships a working local adapter, real chains via @absolutejs/onchain-adapters.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./adapter-kit": "./src/adapter-kit/index.ts"
+  },
+  "files": ["src"],
+  "scripts": {
+    "test": "bun test"
+  },
+  "keywords": ["absolutejs", "blockchain", "onchain", "nft", "soulbound", "provenance", "collectibles"],
+  "license": "MIT"
+}
