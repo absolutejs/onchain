@@ -12,5 +12,5 @@
     "test": "bun test"
   },
   "keywords": ["absolutejs", "blockchain", "onchain", "nft", "soulbound", "provenance", "collectibles"],
-  "license": "MIT"
+  "license": "BSL-1.1"
 }
