@@ -1,7 +1,7 @@
 // The provider-agnostic core. Compose any adapters into one `claim` flow: the single,
 // guarded path to genuine ownership. There is intentionally NO "mint without earning" —
 // claim always requires an Attestation tied to a verifiable fact.
-import type { MintReceipt, OnchainAdapters } from "./adapter-kit/index.ts";
+import type { MintReceipt, OnchainAdapters } from "./adapter-kit/index";
 
 export type ClaimInput = {
   seed: string;       // the asset (deterministic creature/item seed)

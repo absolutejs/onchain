@@ -7,14 +7,31 @@
   },
   "description": "Tasteful, optional on-chain provenance for AbsoluteJS apps: earn → gasless, soulbound, seed-is-asset collectibles with real editions. Provider-agnostic; ships a working local adapter, real chains via @absolutejs/onchain-adapters.",
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./adapter-kit": "./src/adapter-kit/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./adapter-kit": {
+      "types": "./dist/adapter-kit/index.d.ts",
+      "import": "./dist/adapter-kit/index.js",
+      "default": "./dist/adapter-kit/index.js"
+    }
   },
-  "files": ["src"],
+  "files": ["dist", "README.md"],
   "scripts": {
+    "build": "rm -rf dist && bun build src/index.ts src/adapter-kit/index.ts --outdir dist --sourcemap --target=bun && tsc --project tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
     "test": "bun test"
   },
   "keywords": ["absolutejs", "blockchain", "onchain", "nft", "soulbound", "provenance", "collectibles"],
-  "license": "BSL-1.1"
+  "license": "BSL-1.1",
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "^5.9.0"
+  }
 }

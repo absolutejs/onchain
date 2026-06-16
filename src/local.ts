@@ -10,7 +10,7 @@
 // (e.g. the GitHub commit actually exists and you authored it) before signing.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import type { Attestation, Attester, MintProvider, MintReceipt, OnchainAdapters, RandomnessProvider, WalletProvider } from "./adapter-kit/index.ts";
+import type { Attestation, Attester, MintProvider, MintReceipt, OnchainAdapters, RandomnessProvider, WalletProvider } from "./adapter-kit/index";
 
 const fnv = (str: string) => { let h = 2166136261 >>> 0; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(16).padStart(8, "0"); };
 const hashHex = (str: string) => fnv(str) + fnv(str + "1") + fnv(str + "2") + fnv(str + "3");   // 32 hex chars
