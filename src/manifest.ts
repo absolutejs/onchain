@@ -137,6 +137,21 @@ export const manifest = defineManifest<OnchainAdapters, Onchain>()({
         userId: Type.String({ minLength: 1 }),
       }),
     }),
+    transfer_collectible: tool.runtime({
+      annotations: { openWorldHint: true },
+      description: "Transfer a marketable collectible after the application has atomically settled its sale, trade, gift, or recovery. The settlement reference makes retries idempotent and becomes public provenance.",
+      handler: async ({ fromUserId, reason, settlementRef, toUserId, tokenId }, onchain) => JSON.stringify(await onchain.transfer(fromUserId, toUserId, { tokenId, reason, settlementRef })),
+      input: Type.Object({
+        fromUserId: Type.String({ minLength: 1 }), toUserId: Type.String({ minLength: 1 }), tokenId: Type.String({ minLength: 1 }), settlementRef: Type.String({ minLength: 1 }),
+        reason: Type.Union([Type.Literal("sale"), Type.Literal("trade"), Type.Literal("gift"), Type.Literal("recovery")]),
+      }),
+    }),
+    collectible_provenance: tool.runtime({
+      annotations: { openWorldHint: true, readOnlyHint: true },
+      description: "Read the ordered mint and transfer history for a collectible, including its immutable original owner.",
+      handler: async ({ tokenId }, onchain) => JSON.stringify(await onchain.provenance(tokenId)),
+      input: Type.Object({ tokenId: Type.String({ minLength: 1 }) }),
+    }),
   },
   wiring: [
     {
