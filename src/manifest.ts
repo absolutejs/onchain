@@ -18,10 +18,10 @@ export const manifest = defineManifest<OnchainAdapters, Onchain>()({
     accent: "#7c3aed",
     category: "web3",
     description:
-      "Optional on-chain provenance with taste: earned (never bought) soulbound collectibles where the deterministic seed IS the asset, editions are literal (\"#3 of 50\", never a probability), and users stay gasless and walletless. The single `claim` flow requires an Attestation tied to an externally verifiable fact — ownership cannot be faked or forced, even by the app operator. Ships a zero-setup local adapter; real chains ride `@absolutejs/onchain-*` adapters.",
+      "Optional on-chain provenance with taste: attested earning, literal editions, immutable origin ownership, and auditable application-controlled transfers while users stay gasless and walletless. Badges may remain soulbound; market items opt into transfers. Public provenance records ownership and settlement references, never payment or identity data.",
     docsUrl: "https://github.com/absolutejs/onchain",
     name: "@absolutejs/onchain",
-    tagline: "Let players truly own what they earn — no crypto hassle.",
+    tagline: "Earn it, own it, trade it—with provenance intact.",
   },
   implements: [
     defineImplementation<{ file?: string }>()({

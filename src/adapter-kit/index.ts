@@ -1,6 +1,6 @@
 // @absolutejs/onchain/adapter-kit — the provider contract every adapter implements.
-// The design principles (from research): "the seed is the asset" (deterministic, tiny,
-// re-derivable), SOULBOUND (earned, never bought → no speculation), GASLESS + walletless
+// The design principles: "the seed is the asset" (deterministic, tiny,
+// re-derivable), GASLESS + walletless
 // (users never touch crypto), REAL editions (literal "#3 of 50" / "1 of 1", never a
 // probability), and — most importantly — ownership that CANNOT BE FAKED OR FORCED, even
 // by the app operator: a mint requires an Attestation tied to an externally-verifiable
@@ -43,11 +43,46 @@ export interface MintReceipt {
   archetype: string;
   seed: string;
   owner: Address;
+  /** Immutable first owner, retained across every later transfer. */
+  originOwner?: Address;
   serial: number;       // this is the Nth ever minted of its archetype...
   supply: number;       // ...out of this many total (supply 1 ⇒ a literal 1-of-1)
   soulbound: boolean;
   mintedAt: number;
   txRef?: string;       // chain tx / receipt reference (absent for the local adapter)
+}
+
+export type TransferReason = "sale" | "trade" | "gift" | "recovery";
+
+export interface ProvenanceEvent {
+  tokenId: string;
+  sequence: number;
+  kind: "mint" | "transfer";
+  from: Address | null;
+  to: Address;
+  reason: "earned" | TransferReason;
+  settlementRef?: string;
+  txRef?: string;
+  occurredAt: number;
+}
+
+export interface TransferInput {
+  tokenId: string;
+  from: Address;
+  to: Address;
+  reason: TransferReason;
+  /** Idempotent marketplace/trade settlement reference. Never card or identity data. */
+  settlementRef: string;
+}
+
+export interface TransferReceipt {
+  tokenId: string;
+  from: Address;
+  to: Address;
+  reason: TransferReason;
+  settlementRef: string;
+  txRef?: string;
+  transferredAt: number;
 }
 
 export interface MintProvider {
@@ -58,6 +93,9 @@ export interface MintProvider {
   ownerOf(tokenId: string): Promise<Address | null>;
   isSeedUsed(seed: string): Promise<boolean>;
   ownedBy(owner: Address): Promise<MintReceipt[]>;
+  /** Optional for backward-compatible soulbound adapters. Market adapters implement both methods. */
+  transfer?(input: TransferInput): Promise<TransferReceipt>;
+  provenance?(tokenId: string): Promise<ProvenanceEvent[]>;
 }
 
 // Provably-fair randomness (e.g. Chainlink VRF) for the genuine 1-of-1 rolls.

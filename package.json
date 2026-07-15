@@ -1,11 +1,11 @@
 {
   "name": "@absolutejs/onchain",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "homepage": "https://github.com/absolutejs/onchain",
   "bugs": {
     "url": "https://github.com/absolutejs/onchain/issues"
   },
-  "description": "Tasteful, optional on-chain provenance for AbsoluteJS apps: earn → gasless, soulbound, seed-is-asset collectibles with real editions. Provider-agnostic; ships a working local adapter, real chains via @absolutejs/onchain-adapters.",
+  "description": "Gasless collectible provenance for AbsoluteJS apps: attested minting, literal editions, immutable origin ownership, and marketplace-controlled transfers.",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

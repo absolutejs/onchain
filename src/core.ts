@@ -1,7 +1,7 @@
 // The provider-agnostic core. Compose any adapters into one `claim` flow: the single,
 // guarded path to genuine ownership. There is intentionally NO "mint without earning" —
 // claim always requires an Attestation tied to a verifiable fact.
-import type { MintReceipt, OnchainAdapters } from "./adapter-kit/index";
+import type { MintReceipt, OnchainAdapters, ProvenanceEvent, TransferReason, TransferReceipt } from "./adapter-kit/index";
 
 export type ClaimInput = {
   seed: string;       // the asset (deterministic creature/item seed)
@@ -34,6 +34,22 @@ export const createOnchain = (adapters: OnchainAdapters) => ({
   async inventory(userId: string): Promise<MintReceipt[]> {
     const address = await adapters.wallet.addressFor(userId);
     return address ? adapters.mint.ownedBy(address) : [];
+  },
+
+  /** Authorized application transfer. Payment stays off-chain; only public provenance is recorded. */
+  async transfer(fromUserId: string, toUserId: string, input: { tokenId: string; reason: TransferReason; settlementRef: string }): Promise<TransferReceipt> {
+    if (!adapters.mint.transfer) throw new Error("onchain: configured mint adapter does not support transfers");
+    if (!input.settlementRef.trim()) throw new Error("onchain: settlementRef is required");
+    const from = await adapters.wallet.addressFor(fromUserId);
+    if (!from) throw new Error("onchain: current owner wallet not found");
+    const { address: to } = await adapters.wallet.ensureWallet(toUserId);
+    if (from === to) throw new Error("onchain: cannot transfer to the current owner");
+    return adapters.mint.transfer({ ...input, from, to });
+  },
+
+  async provenance(tokenId: string): Promise<ProvenanceEvent[]> {
+    if (!adapters.mint.provenance) throw new Error("onchain: configured mint adapter does not expose provenance");
+    return adapters.mint.provenance(tokenId);
   }
 });
 

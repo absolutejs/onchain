@@ -1,8 +1,8 @@
 # @absolutejs/onchain
 
 Tasteful, **optional** on-chain provenance for AbsoluteJS apps. Let users **earn**
-gasless, **soulbound** (non-transferable), **seed-is-asset** collectibles with **real
-editions** — and ownership that **cannot be faked or forced, even by the app operator**.
+gasless, **seed-is-asset** collectibles with **real editions**, immutable origin ownership,
+and auditable application-controlled sale, trade, gift, and recovery transfers.
 
 Provider-agnostic: swap adapters for any chain/wallet/randomness. Ships a **working local
 adapter** so it runs with zero setup; real chains live in `@absolutejs/onchain-adapters`.
@@ -11,7 +11,8 @@ adapter** so it runs with zero setup; real chains live in `@absolutejs/onchain-a
 
 - **The seed is the asset.** Items are deterministic functions of a seed — tiny to store,
   re-derivable forever by anyone. The on-chain record is just the seed.
-- **Soulbound = earned, not bought.** Non-transferable ⇒ no market, no speculation.
+- **Earned origin never changes.** `originOwner` and the mint event survive every transfer.
+- **Transferability is explicit.** Badges stay soulbound; market items opt in at mint.
 - **Gasless + walletless.** Users never touch crypto (embedded wallet + paymaster).
 - **Real editions, literal numbers.** `edition()` returns `"1 of 1"` or `"#3 of 50"` —
   never a probability. (A "≈ 1 in N" generator preview is *not* ownership.)
@@ -36,6 +37,10 @@ edition(token); // "1 of 1"
 await onchain.inventory("user-id");         // what they've earned
 ```
 
+Marketable assets use `soulbound: false`. After the application's off-chain wallet
+settles atomically, it calls `transfer()` with an idempotent settlement reference. Public
+provenance contains ownership and settlement references—not card or identity data.
+
 Swap `localAdapter()` for `baseAdapter({...})` (`@absolutejs/onchain-base`) for real,
 gasless, soulbound mints on Base — same `claim` API.
 
@@ -43,7 +48,8 @@ gasless, soulbound mints on Base — same `claim` API.
 
 Implement `@absolutejs/onchain/adapter-kit`: `WalletProvider`, `Attester` (the integrity
 gate — verify the fact, then sign), `MintProvider` (uniqueness + serials), and optionally
-`RandomnessProvider` (VRF for true 1-of-1 rolls). See `@absolutejs/onchain-adapters`.
+`RandomnessProvider` (VRF for true 1-of-1 rolls). Market-capable mint providers also
+implement `transfer` and `provenance`. See `@absolutejs/onchain-adapters`.
 
 > The local adapter's Attester does **not** verify facts (it's fakeable, for dev only).
 > Real integrity comes from a chain adapter whose Attester re-checks the fact.

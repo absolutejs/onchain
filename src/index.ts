@@ -1,5 +1,5 @@
 // @absolutejs/onchain — tasteful, optional on-chain provenance for AbsoluteJS apps.
-// Earn → gasless, soulbound, seed-is-asset collectibles with REAL editions. Provider-
+// Earn → gasless, seed-is-asset collectibles with real editions and auditable transfers. Provider-
 // agnostic (swap adapters); ships a working local adapter so it runs with zero setup.
 export { createOnchain, edition } from "./core";
 export type { ClaimInput, Onchain } from "./core";

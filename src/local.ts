@@ -10,18 +10,19 @@
 // (e.g. the GitHub commit actually exists and you authored it) before signing.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import type { Attestation, Attester, MintProvider, MintReceipt, OnchainAdapters, RandomnessProvider, WalletProvider } from "./adapter-kit/index";
+import type { Attestation, Attester, MintProvider, MintReceipt, OnchainAdapters, ProvenanceEvent, RandomnessProvider, TransferReceipt, WalletProvider } from "./adapter-kit/index";
 
 const fnv = (str: string) => { let h = 2166136261 >>> 0; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(16).padStart(8, "0"); };
 const hashHex = (str: string) => fnv(str) + fnv(str + "1") + fnv(str + "2") + fnv(str + "3");   // 32 hex chars
 
-type Ledger = { receipts: Record<string, MintReceipt>; seeds: Record<string, string>; counts: Record<string, number> };
+type Ledger = { receipts: Record<string, MintReceipt>; seeds: Record<string, string>; counts: Record<string, number>; provenance: Record<string, ProvenanceEvent[]>; transfers: Record<string, TransferReceipt> };
 
 export const localAdapter = (opts: { file?: string; attesterKey?: string } = {}): OnchainAdapters => {
   const key = opts.attesterKey ?? "local-dev-key";
-  const load = (): Ledger => { try { return JSON.parse(readFileSync(opts.file!, "utf8")); } catch { return { receipts: {}, seeds: {}, counts: {} }; } };
+  const empty = (): Ledger => ({ receipts: {}, seeds: {}, counts: {}, provenance: {}, transfers: {} });
+  const load = (): Ledger => { try { const parsed = JSON.parse(readFileSync(opts.file!, "utf8")); return { ...empty(), ...parsed }; } catch { return empty(); } };
   const save = (l: Ledger) => { if (!opts.file) return; try { mkdirSync(dirname(opts.file), { recursive: true }); writeFileSync(opts.file, JSON.stringify(l)); } catch {} };
-  const mem: Ledger = opts.file ? load() : { receipts: {}, seeds: {}, counts: {} };
+  const mem: Ledger = opts.file ? load() : empty();
 
   const wallet: WalletProvider = {
     id: "local",
@@ -45,13 +46,32 @@ export const localAdapter = (opts: { file?: string; attesterKey?: string } = {})
       if (mintOpts.maxSupply !== undefined && serial > mintOpts.maxSupply) throw new Error("onchain: edition sold out");
       mem.counts[att.archetype] = serial;
       const tokenId = `${att.archetype}#${serial}`;
-      const receipt: MintReceipt = { tokenId, archetype: att.archetype, seed: att.seed, owner: att.subject, serial, supply, soulbound: mintOpts.soulbound ?? true, mintedAt: Date.now() };
+      const receipt: MintReceipt = { tokenId, archetype: att.archetype, seed: att.seed, owner: att.subject, originOwner: att.subject, serial, supply, soulbound: mintOpts.soulbound ?? true, mintedAt: Date.now() };
       mem.receipts[tokenId] = receipt; mem.seeds[att.seed] = tokenId; save(mem);
+      mem.provenance[tokenId] = [{ tokenId, sequence: 1, kind: "mint", from: null, to: att.subject, reason: "earned", occurredAt: receipt.mintedAt }];
+      save(mem);
       return receipt;
     },
     ownerOf: async (tokenId) => mem.receipts[tokenId]?.owner ?? null,
     isSeedUsed: async (seed) => Boolean(mem.seeds[seed]),
-    ownedBy: async (owner) => Object.values(mem.receipts).filter((r) => r.owner === owner)
+    ownedBy: async (owner) => Object.values(mem.receipts).filter((r) => r.owner === owner),
+    transfer: async (input) => {
+      const previous = mem.transfers[input.settlementRef];
+      if (previous) return previous;
+      const receipt = mem.receipts[input.tokenId];
+      if (!receipt) throw new Error("onchain: token not found");
+      if (receipt.soulbound) throw new Error("onchain: soulbound token cannot be transferred");
+      if (receipt.owner !== input.from) throw new Error("onchain: transfer owner mismatch");
+      if (input.from === input.to) throw new Error("onchain: cannot transfer to current owner");
+      const transferredAt = Date.now();
+      const result: TransferReceipt = { ...input, transferredAt };
+      mem.receipts[input.tokenId] = { ...receipt, owner: input.to, originOwner: receipt.originOwner ?? receipt.owner };
+      const history = mem.provenance[input.tokenId] ?? [{ tokenId: input.tokenId, sequence: 1, kind: "mint" as const, from: null, to: receipt.originOwner ?? receipt.owner, reason: "earned" as const, occurredAt: receipt.mintedAt }];
+      history.push({ tokenId: input.tokenId, sequence: history.length + 1, kind: "transfer", from: input.from, to: input.to, reason: input.reason, settlementRef: input.settlementRef, occurredAt: transferredAt });
+      mem.provenance[input.tokenId] = history; mem.transfers[input.settlementRef] = result; save(mem);
+      return result;
+    },
+    provenance: async (tokenId) => [...(mem.provenance[tokenId] ?? [])]
   };
 
   const randomness: RandomnessProvider = {

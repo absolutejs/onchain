@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createOnchain, edition, localAdapter } from "../src/index.ts";
+import { createOnchain, edition, localAdapter } from "../src/index";
 
 describe("onchain core + local adapter", () => {
   test("claim mints a real 1-of-1 — a literal edition, soulbound, earned", async () => {
@@ -37,6 +37,26 @@ describe("onchain core + local adapter", () => {
     await oc.claim("carol", { seed: "c1", fact: "f", archetype: "wild-creature", maxSupply: 1 });
     const inv = await oc.inventory("carol");
     expect(inv).toHaveLength(1);
-    expect(inv[0].seed).toBe("c1");
+    expect(inv[0]!.seed).toBe("c1");
+  });
+
+  test("marketable assets transfer idempotently and preserve their original owner", async () => {
+    const oc = createOnchain(localAdapter());
+    const minted = await oc.claim("alice", { seed: "market:1", fact: "earned:1", archetype: "genesis", maxSupply: 50, soulbound: false });
+    const input = { tokenId: minted.tokenId, reason: "sale" as const, settlementRef: "sale:123" };
+    const first = await oc.transfer("alice", "bob", input);
+    const retry = await oc.transfer("alice", "bob", input);
+    expect(retry.transferredAt).toBe(first.transferredAt);
+    expect((await oc.inventory("bob"))[0]!.originOwner).toBe(minted.owner);
+    expect(await oc.provenance(minted.tokenId)).toEqual([
+      expect.objectContaining({ sequence: 1, kind: "mint", reason: "earned" }),
+      expect.objectContaining({ sequence: 2, kind: "transfer", reason: "sale", settlementRef: "sale:123" }),
+    ]);
+  });
+
+  test("soulbound earned assets still refuse transfer", async () => {
+    const oc = createOnchain(localAdapter());
+    const minted = await oc.claim("alice", { seed: "bound:1", fact: "earned:2", archetype: "badge" });
+    await expect(oc.transfer("alice", "bob", { tokenId: minted.tokenId, reason: "gift", settlementRef: "gift:1" })).rejects.toThrow(/soulbound/);
   });
 });
