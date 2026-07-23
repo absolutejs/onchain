@@ -1,6 +1,6 @@
 {
   "name": "@absolutejs/onchain",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "homepage": "https://github.com/absolutejs/onchain",
   "bugs": {
     "url": "https://github.com/absolutejs/onchain/issues"
@@ -52,10 +52,10 @@
     "typescript": "^5.9.0"
   },
   "dependencies": {
-    "@absolutejs/manifest": "^0.1.0",
+    "@absolutejs/manifest": "^0.4.0",
     "@sinclair/typebox": "^0.34.0"
   },
   "absolutejs": {
-    "manifestContract": 1
+    "manifestContract": 2
   }
 }
